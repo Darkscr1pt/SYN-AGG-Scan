@@ -12,11 +12,15 @@ ip_address=$1
 # Stealth SYN scan (change or remove --max-rate as needed)
 sudo nmap -p- -sS -oG ports.txt $ip_address
 
-# Store the port numbers (comma separated) in the $ports variable
-ports=$(grep Ports ports.txt | sed 's/, /\n/g' | grep -oP '^\d+' | paste -sd ',' -)
+# Store the open port numbers (comma separated) in the $ports variable
+ports=$(grep -oP '\d{1,5}/open' ports.txt | cut -d'/' -f1 | paste -sd ',' -)
 
 # Perform an aggressive Nmap scan with service version and OS detection and script scan
-sudo nmap -sV -sC -A -T4 -O -p $ports $ip_address -oN nmap_results.txt
+if [ -n "$ports" ]; then
+  sudo nmap -sV -sC -A -T4 -O -p $ports $ip_address -oN nmap_results.txt
+else
+  echo "No open ports found."
+fi
 
 # Remove the ports.txt file after the scan is completed
 rm ports.txt
